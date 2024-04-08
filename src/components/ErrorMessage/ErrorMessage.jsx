@@ -1,8 +1,6 @@
-
-
 const ErrorMessage = () => {
   return (
-    <div>Whops, something is wrong</div>
+    <div>Whops, something is bad</div>
   )
 }
 

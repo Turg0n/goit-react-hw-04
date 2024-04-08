@@ -2,25 +2,20 @@ import css from "../SearchBar/SearchBar.module.css";
 import { toast } from "react-hot-toast";
 
 const SearchBar = ({ onSubmit }) => {
-  
-  const handleClick = (event) => {
+    const handleClick = (event) => {
     event.preventDefault();
-
     const searchInputValue = event.target.form.elements.searchInput.value.trim();
-
     if (searchInputValue === "") {
-      toast.error("Please enter text to search for images.");
+      toast.error("Enter text to search for images.");
       return;
     }
-
     onSubmit(searchInputValue); 
   };
-
   return (
-    <header className={css.searchBox}>
+    <header className={css.searchWrapper}>
       <form>
         <input
-          className={css.inputArea}
+          className={css.inputText}
           type="text"
           name="searchInput"
           placeholder="Search images and photos"

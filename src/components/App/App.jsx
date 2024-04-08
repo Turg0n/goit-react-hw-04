@@ -1,23 +1,23 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
-import { requestProductsByQuery } from "./services/api";
-import SearchBar from "./components/SearchBar/SearchBar";
-import Loader from "./components/Loader/Loader";
-import ErrorMessage from './components/ErrorMessage/ErrorMessage';
-import ImageGallery from './components/ImageGallery/ImageGallery';
-import ImageModal from "./components/ImageModal/ImageModal";
-import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import SearchBar from "../SearchBar/SearchBar";
+import Loader from "../Loader/Loader";
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import ImageGallery from '../ImageGallery/ImageGallery';
+import ImageModal from "../ImageModal/ImageModal";
+import LoadMoreBtn from "../LoadMoreBtn/LoadMoreBtn";
+import { requestImages } from "/src/services/api.js";
 
 function App() {
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
+  const [totalImageOnApi, setTotalImageOnApi] = useState(0);
   const [isLoad, setisLoad] = useState(false);
-  const [isError, setisError] = useState(false);
+  const IMAGE_PER_PAGE = 12;
   const [searchImage, setSearchImage] = useState("");
   const [imagesData, setimagesData] = useState([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedImageUrl, setSelectedImageUrl] = useState("");
-  const [totalImageOnApi, setTotalImageOnApi] = useState(0);
+  const [isError, setisError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const IMAGE_PER_PAGE = 12;
 
   
   const onSubmit = (eventValue) => {
@@ -29,13 +29,12 @@ function App() {
   };
   
 
-
   const fetchData = async (searchImage, currentPage) => {
     if (searchImage) {
       try {
         setisError(false);
         setisLoad(true);
-        const data = await requestProductsByQuery(searchImage, IMAGE_PER_PAGE, currentPage);
+        const data = await requestImages(searchImage, IMAGE_PER_PAGE, currentPage);
         setimagesData(previmagesData => [...previmagesData, ...data.results]); 
         setTotalImageOnApi(data.total);
       } catch (error) {
@@ -45,14 +44,11 @@ function App() {
       }
     }
   };
-
-
   useEffect(() => {
     if (searchImage) {
       fetchData(searchImage, currentPage);
     }
   }, [searchImage, currentPage]);
-
 
   const onClickOnImage = (imageUrl) => {
     setSelectedImageUrl(imageUrl);

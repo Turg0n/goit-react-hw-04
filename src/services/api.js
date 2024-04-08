@@ -5,7 +5,7 @@ const instance = axios.create({
   baseURL: "https://api.unsplash.com",
 });
 
-export const requestProductsByQuery = async (
+export const requestImages = async (
     query = "",
     per_page = 12,
     page = 1
