@@ -1,63 +1,80 @@
-import { useState } from 'react';
-import { useEffect } from 'react';
-import Description from './components/Description/Description';
-import Options from './components/Options/Options';
-import Feedback from './components/Feedback/Feedback';
-import Notification from './components/Notification/Notification';
-import Bar from './components/Bar/Bar';
+import { useState, useEffect, useMemo } from "react";
+import "./App.css";
+import { requestProductsByQuery } from "./services/api";
+import SearchBar from "./components/SearchBar/SearchBar";
+import Loader from "./components/Loader/Loader";
+import ErrorMessage from './components/ErrorMessage/ErrorMessage';
+import ImageGallery from './components/ImageGallery/ImageGallery';
+import ImageModal from "./components/ImageModal/ImageModal";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
 
 function App() {
-  const [reviews, setReviews] = useState(() => {
-    const savedReviews = JSON.parse(localStorage.getItem('reviews')) ?? {
-      good: 0,
-      neutral: 0,
-      bad: 0,
-    };
+  const [isLoad, setisLoad] = useState(false);
+  const [isError, setisError] = useState(false);
+  const [searchImage, setSearchImage] = useState("");
+  const [imagesData, setimagesData] = useState([]);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
+  const [totalImageOnApi, setTotalImageOnApi] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const IMAGE_PER_PAGE = 12;
 
-    return savedReviews;
-  });
+  
+  const onSubmit = (eventValue) => {
+    if (eventValue !== searchImage) {
+      setSearchImage(eventValue);
+      setCurrentPage(1);
+      setimagesData([]);
+    }
+  };
+  
 
-  useEffect(() => {
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-  }, [reviews]);
 
-  const totalFeedback = Object.values(reviews).reduce((acc, el) => acc + el, 0);
-  const positivePercentage = Math.round(
-    ((reviews.good + reviews.neutral) / totalFeedback) * 100
-  );
-
-  const updateFeedback = feedbackType => {
-    setReviews({
-      ...reviews,
-      [feedbackType]: reviews[feedbackType] + 1,
-    });
+  const fetchData = async (searchImage, currentPage) => {
+    if (searchImage) {
+      try {
+        setisError(false);
+        setisLoad(true);
+        const data = await requestProductsByQuery(searchImage, IMAGE_PER_PAGE, currentPage);
+        setimagesData(previmagesData => [...previmagesData, ...data.results]); 
+        setTotalImageOnApi(data.total);
+      } catch (error) {
+        setisError(true);
+      } finally {
+        setisLoad(false);
+      }
+    }
   };
 
-  const resetFeedback = () => {
-    setReviews({
-      good: 0,
-      neutral: 0,
-      bad: 0,
-    });
+
+  useEffect(() => {
+    if (searchImage) {
+      fetchData(searchImage, currentPage);
+    }
+  }, [searchImage, currentPage]);
+
+
+  const onClickOnImage = (imageUrl) => {
+    setSelectedImageUrl(imageUrl);
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+  };
+
+  const onClickLoadMore = () => {
+    setCurrentPage(prevPage => prevPage + 1); 
   };
 
   return (
     <>
-      <Description />
-      <Options
-        updateFeedback={updateFeedback}
-        resetFeedback={resetFeedback}
-        totalFeedback={totalFeedback}
-      />
-      {totalFeedback > 0 && (
-        <Feedback
-          reviews={reviews}
-          totalFeedback={totalFeedback}
-          positivePercentage={positivePercentage}
-        />
-      )}
-      {!totalFeedback && <Notification />}
-      {totalFeedback > 0 && <Bar positive={positivePercentage} />}
+      <SearchBar onSubmit={onSubmit} />
+      {imagesData.length>0 && <ImageGallery Images={imagesData} onClickOnImage={onClickOnImage} />}
+      {modalIsOpen && <ImageModal imageUrl={selectedImageUrl} modalIsOpen={modalIsOpen} onRequestClose={closeModal} />}
+      {isLoad && <Loader />}
+      {isError && <ErrorMessage />}
+      {(currentPage * IMAGE_PER_PAGE < totalImageOnApi) && <LoadMoreBtn onClickLoadMore={onClickLoadMore} />}
     </>
   );
 }
